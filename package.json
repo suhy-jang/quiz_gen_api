@@ -1,0 +1,29 @@
+{
+  "name": "quiz_gen_api",
+  "version": "1.0.0",
+  "description": "Quiz gen backend API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node",
+    "dev": "NODE_ENV=development nodemon",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suhy-jang/quiz_gen_api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/suhy-jang/quiz_gen_api/issues"
+  },
+  "homepage": "https://github.com/suhy-jang/quiz_gen_api#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "dotenv": "^8.2.0",
+    "nodemon": "^2.0.4"
+  }
+}
