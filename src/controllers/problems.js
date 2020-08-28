@@ -49,6 +49,7 @@ exports.updateProblem = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.deleteProblem = asyncHandler(async (req, res, next) => {
   const problem = await Problem.findById(req.params.id);
+  if (!problem) return next(createError(404));
   // validation: quiz.teacher
   const result = await problem.remove();
   if (!result) return next(createError(400));

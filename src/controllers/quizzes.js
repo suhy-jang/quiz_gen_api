@@ -50,6 +50,7 @@ exports.updateQuiz = asyncHandler(async (req, res, next) => {
 exports.deleteQuiz = asyncHandler(async (req, res, next) => {
   const quiz = await Quiz.findById(req.params.id);
   // validation: quiz.teacher
+  if (!quiz) return next(createError(404));
   const result = await quiz.remove();
   if (!result) return next(createError(400));
 
