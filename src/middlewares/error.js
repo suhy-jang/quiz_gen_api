@@ -12,10 +12,8 @@ const errorHandler = (err, req, res, next) => {
     console.log(`${error.message} | ${error.name}`.brightRed);
   }
 
-  // console.log(err.statusCode);
-
   // mongoose bad ObjectId
-  if (error.name === 'CastError' || error.name === 'NotFoundError') {
+  if (error.name === 'CastError') {
     error.code = 404;
     error.message = createError(error.code);
   } else if (error.name === 'ValidationError') {
