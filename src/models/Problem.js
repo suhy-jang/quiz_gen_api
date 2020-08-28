@@ -14,6 +14,9 @@ const ProblemSchema = new mongoose.Schema({
   score_weight: {
     type: Number,
     default: 1,
+    min: [1, 'Score must be at least 1'],
+    max: [3, 'Score cannot be more than 3'],
+    enum: [1, 2, 3],
   },
   createdAt: {
     type: Date,
@@ -23,6 +26,12 @@ const ProblemSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+});
+
+ProblemSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
+  const update = this.getUpdate() || this;
+  update.updatedAt = Date.now();
+  next();
 });
 
 module.exports = mongoose.model('Problem', ProblemSchema);
