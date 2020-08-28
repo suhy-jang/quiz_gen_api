@@ -7,7 +7,7 @@ const asyncHandler = require('../middlewares/async');
 // @access  Private
 exports.createQuizBrocker = asyncHandler(async (req, res, next) => {
   // login with teacher role
-  // create with teacher id
+  // create with quiz id and student
   let quizBrocker = new QuizBrocker(req.body);
   quizBrocker = await quizBrocker.save();
   res.status(201).json({ success: true, data: quizBrocker });
@@ -17,8 +17,8 @@ exports.createQuizBrocker = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/quizBrockers
 // @access  Private
 exports.getQuizBrockers = asyncHandler(async (req, res, next) => {
-  // find by teacher id
-  // validation: quizBrocker.teacher
+  // find by student id
+  // validation: quizBrocker.student
   const quizBrockers = await QuizBrocker.find();
   res.status(200).json({ success: true, data: quizBrockers });
 });
@@ -28,7 +28,7 @@ exports.getQuizBrockers = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.getQuizBrocker = asyncHandler(async (req, res, next) => {
   const quizBrocker = await QuizBrocker.findById(req.params.id);
-  // validation: quizBrocker.teacher or quizBroker.student
+  // validation: quiz.teacher or quizBroker.student
   res.status(200).json({ success: true, data: quizBrocker });
 });
 
@@ -37,7 +37,7 @@ exports.getQuizBrocker = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.updateQuizBrocker = asyncHandler(async (req, res, next) => {
   const quizBrocker = await QuizBrocker.findById(req.params.id);
-  // validation: quizBrocker.teacher
+  // validation: quizBrocker.student
   const result = await QuizBrocker.findByIdAndUpdate(req.params.id, req.body, {
     runValidators: true,
   });
@@ -49,7 +49,7 @@ exports.updateQuizBrocker = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.deleteQuizBrocker = asyncHandler(async (req, res, next) => {
   const quizBrocker = await QuizBrocker.findById(req.params.id);
-  // validation: quizBrocker.teacher
+  // validation: quizBrocker.quiz.teacher
   if (!quizBrocker) return next(createError(404));
   const result = await quizBrocker.remove();
   if (!result) return next(createError(400));
