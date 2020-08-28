@@ -15,4 +15,10 @@ const QuizSchema = new mongoose.Schema({
   },
 });
 
+QuizSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
+  const update = this.getUpdate() || this;
+  update.updatedAt = Date.now();
+  next();
+});
+
 module.exports = mongoose.model('Quiz', QuizSchema);

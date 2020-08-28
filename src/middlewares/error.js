@@ -12,9 +12,8 @@ const errorHandler = (err, req, res, next) => {
     error.code = 404;
     error.message = createError(error.code);
   } else if (error.name === 'ValidationError') {
-    const messages = error.message.split(':');
     error.code = 400;
-    error.message = createError(messages[messages.length - 1]);
+    error.message = createError(error.code);
   } else if (error.code === 11000) {
     // mongoose duplicate key
     error.code = 409;
