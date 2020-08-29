@@ -18,11 +18,20 @@ const errorHandler = (err, req, res, next) => {
     error.message = createError(error.code);
   } else if (error.name === 'ValidationError') {
     error.code = 400;
-    error.message = createError(error.code);
-  } else if (error.code === 11000) {
+    const [, , ...messages] = error.message.split(':');
+    if (error.message.includes('`')) {
+      error.message = createError(error.code);
+    } else if (messages.length === 1) {
+      error.message = createError(messages[0].trim());
+    } else if (messages.length > 1) {
+      const message = messages.map((v) => v.split(',')[0].trim());
+      error.message = { message };
+    }
+  } else if (error.code === 11000 || error.message.includes('duplicate')) {
     // mongoose duplicate key
+    const field = Object.keys(error.keyPattern)[0] || 'field';
     error.code = 409;
-    error.message = createError('Duplicated field value entered');
+    error.message = createError(`Duplicated ${field}`);
   } else if (error.code) {
     error.message = error.message || createError(error.code);
   } else {
