@@ -42,26 +42,39 @@ exports.logout = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/auth/me
 // @access  Private
 exports.getMe = asyncHandler(async (req, res, next) => {
-  // params -> req.user.id
-  const user = await User.findById(req.params.id);
-  sendTokenResponse(user, 200, res);
+  const user = await User.findById(req.user.id);
+  res.status(200).json({ success: true, data: user });
 });
 
 // @desc    Update user details
 // @route   PATCH /api/v1/auth/update-details
 // @access  Private
 exports.updateDetails = asyncHandler(async (req, res, next) => {
-  const fieldsToUpdate = {
-    name: req.body.name,
-    email: req.body.email,
-    mobile_number: req.body.mobile_number,
-    role: req.body.role,
-  };
-  // params -> req.user.id
-  const user = await User.findByIdAndUpdate(req.params.id, fieldsToUpdate, {
-    runValidators: true,
-  });
-  sendTokenResponse(user, 200, res);
+  const { name, email, mobile_number } = req.body;
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { name, email, mobile_number },
+    {
+      runValidators: true,
+      omitUndefined: true,
+    }
+  );
+  res.status(200).json({ success: true, data: user });
+});
+
+// @desc    Update user role
+// @route   PATCH /api/v1/auth/update-role
+// @access  Private
+exports.updateRole = asyncHandler(async (req, res, next) => {
+  const { role, password } = req.body;
+  const user = await User.findById(req.user.id).select('+password');
+
+  if (!(await user.authenticate(password))) {
+    return next(createError(401));
+  }
+  user.role = role;
+  const updatedUser = await user.save();
+  res.status(200).json({ success: true, data: updatedUser });
 });
 
 // @desc    Update password
@@ -69,24 +82,22 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.updatePassword = asyncHandler(async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;
-  // params -> req.user.id
-  const user = await User.findById(req.params.id).select('+password');
+  const user = await User.findById(req.user.id).select('+password');
 
   if (!(await user.authenticate(currentPassword))) {
     return next(createError(401));
   }
   user.password = newPassword;
-  user.save();
-  sendTokenResponse(user, 200, res);
+  const updatedUser = await user.save();
+  res.status(200).json({ success: true, data: updatedUser });
 });
 
 // @desc    Unregister
 // @route   DELETE /api/v1/auth/unregister
 // @access  Private
 exports.unregister = asyncHandler(async (req, res, next) => {
-  // params -> req.user.id
-  await User.findByIdAndDelete(req.params.id);
-  sendTokenResponse(user, 204, res);
+  await User.findByIdAndDelete(req.user.id);
+  res.status(204).json({ success: true, data: {} });
 });
 
 const sendTokenResponse = (user, code, res) => {

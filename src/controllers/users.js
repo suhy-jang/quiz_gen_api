@@ -1,3 +1,4 @@
+const createError = require('http-errors');
 const User = require('../models/User');
 const asyncHandler = require('../middlewares/async');
 
@@ -31,10 +32,16 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 // @route   PATCH /api/v1/users/:id
 // @access  Private
 exports.updateUser = asyncHandler(async (req, res, next) => {
-  const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-    runValidators: true,
-  });
-  res.status(201).json({ success: true, data: user });
+  const user = await User.findById(req.params.id);
+  // save: to access construct methods
+  for (const [k, v] of Object.entries(req.body)) {
+    user[k] = v;
+  }
+  const updatedUser = await user.save();
+  if (!updatedUser) {
+    return next(createError(403));
+  }
+  res.status(201).json({ success: true, data: updatedUser });
 });
 
 // @desc    Delete a user
