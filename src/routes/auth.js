@@ -10,15 +10,15 @@ const {
   updatePassword,
   unregister,
 } = require('../controllers/auth');
-const { auth } = require('../middlewares/auth');
+const { authenticate } = require('../middlewares/auth');
 
 router.post('/register', register);
 router.post('/login', login);
-router.post('/logout', auth, logout);
-router.get('/me', auth, getMe);
-router.patch('/update-details', auth, updateDetails);
-router.patch('/update-role', auth, updateRole);
-router.patch('/update-password', auth, updatePassword);
-router.delete('/unregister', auth, unregister);
+router.post('/logout', authenticate, logout);
+router.get('/me', authenticate, getMe);
+router.patch('/update-details', authenticate, updateDetails);
+router.patch('/update-role', authenticate, updateRole);
+router.patch('/update-password', authenticate, updatePassword);
+router.delete('/unregister', authenticate, unregister);
 
 module.exports = router;

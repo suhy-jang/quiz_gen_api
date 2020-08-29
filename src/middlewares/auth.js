@@ -3,7 +3,7 @@ const asyncHandler = require('./async');
 const User = require('../models/User');
 const createError = require('http-errors');
 
-exports.auth = asyncHandler(async (req, res, next) => {
+exports.authenticate = asyncHandler(async (req, res, next) => {
   let token;
 
   if (
@@ -23,9 +23,15 @@ exports.auth = asyncHandler(async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = await User.findById(decoded.id);
-
     next();
   } catch (err) {
     return next(createError(401));
   }
 });
+
+exports.authorize = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role)) {
+    return next(createError(403));
+  }
+  next();
+};

@@ -19,11 +19,9 @@ const errorHandler = (err, req, res, next) => {
   } else if (error.name === 'ValidationError') {
     error.code = 400;
     const [, , ...messages] = error.message.split(':');
-    if (error.message.includes('`')) {
-      error.message = createError(error.code);
-    } else if (messages.length === 1) {
-      error.message = createError(messages[0].trim());
-    } else if (messages.length > 1) {
+    if (error.message.includes('`') || error.message.includes('"')) {
+      error.message = createError(error.name);
+    } else {
       const message = messages.map((v) => v.split(',')[0].trim());
       error.message = { message };
     }

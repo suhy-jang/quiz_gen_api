@@ -52,6 +52,12 @@ UserSchema.pre('save', async function (next) {
   next();
 });
 
+// Cascade delete quizzes when a teacher is deleted
+UserSchema.pre('remove', async function (next) {
+  await this.model('Quiz').deleteMany({ teacher: this._id });
+  next();
+});
+
 UserSchema.methods = {
   getSignedJwtToken: function () {
     return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {

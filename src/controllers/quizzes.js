@@ -6,10 +6,7 @@ const asyncHandler = require('../middlewares/async');
 // @route   POST /api/v1/quizzes
 // @access  Private
 exports.createQuiz = asyncHandler(async (req, res, next) => {
-  // login with teacher role
-  // create with teacher id
-  let quiz = new Quiz(req.body);
-  quiz = await quiz.save();
+  const quiz = await Quiz.create({ ...req.body, teacher: req.user.id });
   res.status(201).json({ success: true, data: quiz });
 });
 
@@ -17,9 +14,8 @@ exports.createQuiz = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/quizzes
 // @access  Private
 exports.getQuizzes = asyncHandler(async (req, res, next) => {
-  // find by teacher id
-  // validation: quiz.teacher
-  const quizzes = await Quiz.find();
+  const findOptions = req.user.role === 'admin' ? {} : { teacher: req.user.id };
+  const quizzes = await Quiz.find(findOptions);
   res.status(200).json({ success: true, data: quizzes });
 });
 
@@ -27,8 +23,8 @@ exports.getQuizzes = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/quizzes/:id
 // @access  Private
 exports.getQuiz = asyncHandler(async (req, res, next) => {
-  const quiz = await Quiz.findById(req.params.id);
-  // validation: quiz.teacher or quizBroker.student
+  const quiz = await getQuizIfAuthorized(req, next);
+  if (!quiz) return;
   res.status(200).json({ success: true, data: quiz });
 });
 
@@ -36,8 +32,8 @@ exports.getQuiz = asyncHandler(async (req, res, next) => {
 // @route   PATCH /api/v1/quizzes/:id
 // @access  Private
 exports.updateQuiz = asyncHandler(async (req, res, next) => {
-  const quiz = await Quiz.findById(req.params.id);
-  // validation: quiz.teacher
+  const quiz = await getQuizIfAuthorized(req, next);
+  if (!quiz) return;
   const result = await Quiz.findByIdAndUpdate(req.params.id, req.body, {
     runValidators: true,
   });
@@ -48,11 +44,17 @@ exports.updateQuiz = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/v1/quizzes/:id
 // @access  Private
 exports.deleteQuiz = asyncHandler(async (req, res, next) => {
-  const quiz = await Quiz.findById(req.params.id);
-  // validation: quiz.teacher
-  if (!quiz) return next(createError(404));
-  const result = await quiz.remove();
-  if (!result) return next(createError(400));
-
+  const quiz = await getQuizIfAuthorized(req, next);
+  if (!quiz) return;
+  quiz.remove();
   res.status(204).json({ success: true });
 });
+
+// Get a quiz when it is authorized
+const getQuizIfAuthorized = async function (req, next) {
+  const quiz = await Quiz.findById(req.params.id);
+  if (!quiz) return next(createError(404));
+  if (quiz.teacher != req.user.id && req.user.role !== 'admin')
+    return next(createError(403));
+  return quiz;
+};
