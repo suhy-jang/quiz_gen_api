@@ -1,24 +1,13 @@
 const mongoose = require('mongoose');
 
-const QuizBrockerSchema = new mongoose.Schema({
-  submission: {
-    type: Boolean,
-    default: false,
+const QuizBrockerSchema = new mongoose.Schema(
+  {
+    submission: {
+      type: Boolean,
+      default: false,
+    },
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-QuizBrockerSchema.pre(['updateOne', 'findOneAndUpdate'], function (next) {
-  const update = this.getUpdate() || this;
-  update.updatedAt = Date.now();
-  next();
-});
+  { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
+);
 
 module.exports = mongoose.model('QuizBrocker', QuizBrockerSchema);
