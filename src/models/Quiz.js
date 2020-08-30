@@ -12,7 +12,25 @@ const QuizSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
+// Cascade delete problems when a quiz is deleted
+QuizSchema.pre('remove', async function (next) {
+  await this.model('Problem').deleteMany({ quiz: this._id });
+  next();
+});
+
+// Reverse populate with virtuals
+QuizSchema.virtual('problems', {
+  ref: 'Problem',
+  localField: '_id',
+  foreignField: 'quiz',
+  justOne: false,
+});
+// options: { sort: { created_at: DESC }}
 module.exports = mongoose.model('Quiz', QuizSchema);

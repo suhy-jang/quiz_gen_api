@@ -15,7 +15,10 @@ exports.createQuiz = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.getQuizzes = asyncHandler(async (req, res, next) => {
   const findOptions = req.user.role === 'admin' ? {} : { teacher: req.user.id };
-  const quizzes = await Quiz.find(findOptions);
+  const quizzes = await Quiz.find(findOptions).populate({
+    path: 'problems',
+    select: 'question solution score_weight',
+  });
   res.status(200).json({ success: true, data: quizzes });
 });
 
@@ -52,7 +55,10 @@ exports.deleteQuiz = asyncHandler(async (req, res, next) => {
 
 // Get a quiz when it is authorized
 const getQuizIfAuthorized = async function (req, next) {
-  const quiz = await Quiz.findById(req.params.id);
+  const quiz = await Quiz.findById(req.params.id).populate({
+    path: 'problems',
+    select: 'question solution score_weight',
+  });
   if (!quiz) return next(createError(404));
   if (quiz.teacher != req.user.id && req.user.role !== 'admin')
     return next(createError(403));

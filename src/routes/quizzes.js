@@ -9,10 +9,16 @@ const {
 } = require('../controllers/quizzes');
 const { authenticate, authorize } = require('../middlewares/auth');
 
+const problemRouter = require('./problems');
+
+// Include other resource routers
+router.use('/:quizId/problems', problemRouter);
+
 router
   .route('/')
   .get(authenticate, authorize('teacher', 'admin'), getQuizzes)
   .post(authenticate, authorize('teacher'), createQuiz);
+
 router
   .route('/:id')
   .get(authenticate, authorize('teacher', 'student', 'admin'), getQuiz)
