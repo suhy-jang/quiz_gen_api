@@ -10,9 +10,11 @@ const {
 const { authenticate, authorize } = require('../middlewares/auth');
 
 const problemRouter = require('./problems');
+const quizBrockerRouter = require('./quizBrockers');
 
 // Include other resource routers
 router.use('/:quizId/problems', problemRouter);
+router.use('/:quizId/students', quizBrockerRouter);
 
 router
   .route('/')

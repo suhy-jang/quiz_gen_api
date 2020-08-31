@@ -55,6 +55,7 @@ UserSchema.pre('save', async function (next) {
 // Cascade delete quizzes when a teacher is deleted
 UserSchema.pre('remove', async function (next) {
   await this.model('Quiz').deleteMany({ teacher: this._id });
+  await this.model('QuizBrocker').deleteMany({ student: this._id });
   next();
 });
 
@@ -74,14 +75,8 @@ UserSchema.methods = {
   },
 };
 
-// Cascade delete problems when a user is deleted
-UserSchema.pre('remove', async function (next) {
-  await this.model('QuizBrocker').deleteMany({ student: this._id });
-  next();
-});
-
 // Reverse populate with virtuals
-UserSchema.virtual('quizBrockers', {
+UserSchema.virtual('assignedQuizzes', {
   ref: 'QuizBrocker',
   localField: '_id',
   foreignField: 'student',

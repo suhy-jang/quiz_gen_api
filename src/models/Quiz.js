@@ -35,7 +35,7 @@ QuizSchema.virtual('problems', {
   options: { sort: { created_at: -1 } },
 });
 
-QuizSchema.virtual('quizBrockers', {
+QuizSchema.virtual('students', {
   ref: 'QuizBrocker',
   localField: '_id',
   foreignField: 'quiz',

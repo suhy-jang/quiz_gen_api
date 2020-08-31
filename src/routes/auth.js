@@ -11,6 +11,10 @@ const {
   unregister,
 } = require('../controllers/auth');
 const { authenticate } = require('../middlewares/auth');
+const quizBrockerRouter = require('./quizBrockers');
+
+// Include other resource routers
+router.use('/quizzes', quizBrockerRouter);
 
 router.post('/register', register);
 router.post('/login', login);

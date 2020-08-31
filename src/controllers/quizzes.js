@@ -21,7 +21,7 @@ exports.getQuizzes = asyncHandler(async (req, res, next) => {
       select: 'question solution score_weight',
     })
     .populate({
-      path: 'quizBrockers',
+      path: 'students',
       select: 'student submission',
       populate: {
         path: 'student',

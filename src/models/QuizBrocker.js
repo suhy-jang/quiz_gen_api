@@ -20,4 +20,6 @@ const QuizBrockerSchema = new mongoose.Schema(
   { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
 );
 
+QuizBrockerSchema.index({ quiz: 1, student: 1 }, { unique: true });
+
 module.exports = mongoose.model('QuizBrocker', QuizBrockerSchema);
