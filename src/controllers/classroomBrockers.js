@@ -3,43 +3,32 @@ const ClassroomBrocker = require('../models/ClassroomBrocker');
 const asyncHandler = require('../middlewares/async');
 
 // @desc    Create a classroomBrocker
-// @route   POST /api/v1/classroomBrockers
+// @route   POST /api/v1/classrooms/:classroomId/students
 // @access  Private
 exports.createClassroomBrocker = asyncHandler(async (req, res, next) => {
-  // login with teacher role
-  // create with teacher id
-  let classroomBrocker = new ClassroomBrocker(req.body);
-  classroomBrocker = await classroomBrocker.save();
+  req.body.classroom = req.params.classroomId;
+  const classroomBrocker = await ClassroomBrocker.create(req.body);
   res.status(201).json({ success: true, data: classroomBrocker });
-});
-
-// @desc    Get all classroomBrockers
-// @route   GET /api/v1/classroomBrockers
-// @access  Private
-exports.getClassroomBrockers = asyncHandler(async (req, res, next) => {
-  // find by teacher id
-  const classroomBrockers = await ClassroomBrocker.find();
-  res.status(200).json({ success: true, data: classroomBrockers });
-});
-
-// @desc    Get single classroomBrocker
-// @route   GET /api/v1/classroomBrocker/:id
-// @access  Private
-exports.getClassroomBrocker = asyncHandler(async (req, res, next) => {
-  const classroomBrocker = await ClassroomBrocker.findById(req.params.id);
-  // validation: classroomBrocker.teacher
-  res.status(200).json({ success: true, data: classroomBrocker });
 });
 
 // @desc    Delete a classroomBrocker
 // @route   DELETE /api/v1/classroomBrockers/:id
 // @access  Private
 exports.deleteClassroomBrocker = asyncHandler(async (req, res, next) => {
-  const classroomBrocker = await ClassroomBrocker.findById(req.params.id);
+  const classroomBrocker = await ClassroomBrocker.findById(
+    req.params.id
+  ).populate({
+    path: 'classroom',
+    select: 'teacher',
+  });
   if (!classroomBrocker) return next(createError(404));
-  // validation: classroomBrocker.teacher
-  const result = await classroomBrocker.remove();
-  if (!result) return next(createError(400));
+  if (
+    req.user.role !== 'admin' &&
+    classroomBrocker.classroom.teacher.toString() !== req.user.id
+  ) {
+    return next(createError(403));
+  }
 
-  res.status(204).json({ success: true });
+  await classroomBrocker.remove();
+  res.status(200).json({ success: true, data: {} });
 });

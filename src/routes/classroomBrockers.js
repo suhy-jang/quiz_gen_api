@@ -1,13 +1,17 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 const {
   createClassroomBrocker,
-  getClassroomBrockers,
-  getClassroomBrocker,
   deleteClassroomBrocker,
 } = require('../controllers/classroomBrockers');
+const { authenticate, authorize } = require('../middlewares/auth');
 
-router.route('/').get(getClassroomBrockers).post(createClassroomBrocker);
-router.route('/:id').get(getClassroomBrocker).delete(deleteClassroomBrocker);
+router
+  .route('/')
+  .post(authenticate, authorize('teacher', 'admin'), createClassroomBrocker);
+
+router
+  .route('/:id')
+  .delete(authenticate, authorize('teacher', 'admin'), deleteClassroomBrocker);
 
 module.exports = router;
