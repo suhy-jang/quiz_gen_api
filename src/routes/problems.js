@@ -11,12 +11,12 @@ const { authenticate, authorize } = require('../middlewares/auth');
 
 router
   .route('/')
-  .get(authenticate, authorize('teacher', 'student', 'admin'), getProblems)
+  .get(authenticate, authorize('teacher', 'admin'), getProblems)
   .post(authenticate, authorize('teacher'), createProblem);
 
 router
   .route('/:id')
-  .get(authenticate, authorize('teacher', 'student', 'admin'), getProblem)
+  .get(authenticate, authorize('teacher', 'admin'), getProblem)
   .patch(authenticate, authorize('teacher', 'admin'), updateProblem)
   .delete(authenticate, authorize('teacher', 'admin'), deleteProblem);
 

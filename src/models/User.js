@@ -45,6 +45,8 @@ const UserSchema = new mongoose.Schema(
 UserSchema.pre('save', async function (next) {
   if (this.isModified('role')) {
     this.score = this.role === 'student' ? 0 : undefined;
+    await this.model('Quiz').deleteMany({ teacher: this._id });
+    await this.model('QuizBrocker').deleteMany({ student: this._id });
   }
   if (this.isModified('password')) {
     this.password = this.hashPassword(this.password);

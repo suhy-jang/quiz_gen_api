@@ -7,32 +7,34 @@ const Quiz = require('../models/Quiz');
 // @route   POST /api/v1/quizzes/:quizId/problems
 // @access  Private
 exports.createProblem = asyncHandler(async (req, res, next) => {
-  const quiz = await getQuizIfAuthorized(req, next);
-  if (!quiz) return;
+  const quiz = await Quiz.findById(req.params.quizId);
+  if (quiz.teacher.toString() !== req.user.id && req.user.role !== 'admin')
+    return next(createError(403));
+
   req.body.quiz = req.params.quizId;
   req.body.teacher = req.user.id;
+
   const problem = await Problem.create(req.body);
   res.status(201).json({ success: true, data: problem });
 });
 
 // @desc    Get all problems
-// @route   POST /api/v1/problems
+// @route   GET /api/v1/problems
 // @route   GET /api/v1/quizzes/:quizId/problems
 // @access  Private
 exports.getProblems = asyncHandler(async (req, res, next) => {
-  let query;
+  const quizId = req.params.quizId;
   const queryParams = {};
 
   if (req.user.role !== 'admin') {
     queryParams.teacher = req.user.id;
   }
-  if (req.params.quizId) {
-    queryParams.quiz = req.params.quizId;
+  if (quizId) {
+    const quiz = await Quiz.findById(quizId);
+    queryParams.quiz = quiz;
   }
 
-  query = Problem.find(queryParams);
-
-  const problems = await query;
+  const problems = await Problem.find(queryParams);
   res.status(200).json({ success: true, data: problems });
 });
 
@@ -40,9 +42,7 @@ exports.getProblems = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/problem/:id
 // @access  Private
 exports.getProblem = asyncHandler(async (req, res, next) => {
-  const problem = await getProblemIfAuthorized(req, next);
-  if (!problem) return;
-  // validation: quiz.teacher or quizBroker.student
+  const problem = await Problem.findById(req.params.id);
   res.status(200).json({ success: true, data: problem });
 });
 
@@ -68,21 +68,9 @@ exports.deleteProblem = asyncHandler(async (req, res, next) => {
   res.status(204).json({ success: true });
 });
 
-// Get a quiz when it is authorized
-const getQuizIfAuthorized = async function (req, next) {
-  const quiz = await Quiz.findById(req.params.quizId);
-  if (!quiz) return next(createError(404));
-  if (quiz.teacher.toString() !== req.user.id && req.user.role !== 'admin')
-    return next(createError(403));
-  return quiz;
-};
-
 // Get a problem when it is authorized
 const getProblemIfAuthorized = async function (req, next) {
-  let query;
-  query = Problem.findById(req.params.id);
-  const problem = await query;
-  if (!problem) return next(createError(404));
+  const problem = await Problem.findById(req.params.id);
   if (problem.teacher.toString() !== req.user.id && req.user.role !== 'admin')
     return next(createError(403));
   return problem;

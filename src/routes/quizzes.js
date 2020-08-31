@@ -23,7 +23,7 @@ router
 
 router
   .route('/:id')
-  .get(authenticate, authorize('teacher', 'student', 'admin'), getQuiz)
+  .get(authenticate, authorize('teacher', 'admin'), getQuiz)
   .patch(authenticate, authorize('teacher', 'admin'), updateQuiz)
   .delete(authenticate, authorize('teacher', 'admin'), deleteQuiz);
 
