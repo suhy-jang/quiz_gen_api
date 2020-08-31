@@ -64,7 +64,7 @@ UserSchema.pre('remove', async function (next) {
 UserSchema.methods = {
   getSignedJwtToken: function () {
     return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRE,
+      expiresIn: '7d',
     });
   },
   // Match user entered password to hashed password in database
