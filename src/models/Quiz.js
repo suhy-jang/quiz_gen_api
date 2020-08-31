@@ -22,6 +22,7 @@ const QuizSchema = new mongoose.Schema(
 // Cascade delete problems when a quiz is deleted
 QuizSchema.pre('remove', async function (next) {
   await this.model('Problem').deleteMany({ quiz: this._id });
+  await this.model('QuizBrocker').deleteMany({ quiz: this._id });
   next();
 });
 
@@ -31,6 +32,15 @@ QuizSchema.virtual('problems', {
   localField: '_id',
   foreignField: 'quiz',
   justOne: false,
+  options: { sort: { created_at: -1 } },
 });
-// options: { sort: { created_at: DESC }}
+
+QuizSchema.virtual('quizBrockers', {
+  ref: 'QuizBrocker',
+  localField: '_id',
+  foreignField: 'quiz',
+  justOne: false,
+  options: { sort: { created_at: -1 } },
+});
+
 module.exports = mongoose.model('Quiz', QuizSchema);

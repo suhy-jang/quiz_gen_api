@@ -74,4 +74,19 @@ UserSchema.methods = {
   },
 };
 
+// Cascade delete problems when a user is deleted
+UserSchema.pre('remove', async function (next) {
+  await this.model('QuizBrocker').deleteMany({ student: this._id });
+  next();
+});
+
+// Reverse populate with virtuals
+UserSchema.virtual('quizBrockers', {
+  ref: 'QuizBrocker',
+  localField: '_id',
+  foreignField: 'student',
+  justOne: false,
+  options: { sort: { updated_at: -1 } },
+});
+
 module.exports = mongoose.model('User', UserSchema);

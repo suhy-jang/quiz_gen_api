@@ -1,6 +1,6 @@
 const createError = require('http-errors');
-const Quiz = require('../models/Quiz');
 const asyncHandler = require('../middlewares/async');
+const Quiz = require('../models/Quiz');
 
 // @desc    Create a quiz
 // @route   POST /api/v1/quizzes
@@ -15,10 +15,19 @@ exports.createQuiz = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.getQuizzes = asyncHandler(async (req, res, next) => {
   const findOptions = req.user.role === 'admin' ? {} : { teacher: req.user.id };
-  const quizzes = await Quiz.find(findOptions).populate({
-    path: 'problems',
-    select: 'question solution score_weight',
-  });
+  const quizzes = await Quiz.find(findOptions)
+    .populate({
+      path: 'problems',
+      select: 'question solution score_weight',
+    })
+    .populate({
+      path: 'quizBrockers',
+      select: 'student submission',
+      populate: {
+        path: 'student',
+        select: 'name score',
+      },
+    });
   res.status(200).json({ success: true, data: quizzes });
 });
 
@@ -55,10 +64,7 @@ exports.deleteQuiz = asyncHandler(async (req, res, next) => {
 
 // Get a quiz when it is authorized
 const getQuizIfAuthorized = async function (req, next) {
-  const quiz = await Quiz.findById(req.params.id).populate({
-    path: 'problems',
-    select: 'question solution score_weight',
-  });
+  const quiz = await Quiz.findById(req.params.id);
   if (!quiz) return next(createError(404));
   if (quiz.teacher != req.user.id && req.user.role !== 'admin')
     return next(createError(403));
