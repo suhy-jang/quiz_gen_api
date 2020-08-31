@@ -45,10 +45,19 @@ const UserSchema = new mongoose.Schema(
 UserSchema.pre('save', async function (next) {
   if (this.isModified('role')) {
     this.score = this.role === 'student' ? 0 : undefined;
+    await this.model('Quiz').deleteMany({ teacher: this._id });
+    await this.model('QuizBrocker').deleteMany({ student: this._id });
   }
   if (this.isModified('password')) {
     this.password = this.hashPassword(this.password);
   }
+  next();
+});
+
+// Cascade delete quizzes when a teacher is deleted
+UserSchema.pre('remove', async function (next) {
+  await this.model('Quiz').deleteMany({ teacher: this._id });
+  await this.model('QuizBrocker').deleteMany({ student: this._id });
   next();
 });
 
@@ -67,5 +76,14 @@ UserSchema.methods = {
     return bcrypt.hashSync(password, 10);
   },
 };
+
+// Reverse populate with virtuals
+UserSchema.virtual('assignedQuizzes', {
+  ref: 'QuizBrocker',
+  localField: '_id',
+  foreignField: 'student',
+  justOne: false,
+  options: { sort: { updated_at: -1 } },
+});
 
 module.exports = mongoose.model('User', UserSchema);

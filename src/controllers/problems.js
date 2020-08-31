@@ -1,25 +1,40 @@
 const createError = require('http-errors');
-const Problem = require('../models/Problem');
 const asyncHandler = require('../middlewares/async');
+const Problem = require('../models/Problem');
+const Quiz = require('../models/Quiz');
 
 // @desc    Create a problem
-// @route   POST /api/v1/problems
+// @route   POST /api/v1/quizzes/:quizId/problems
 // @access  Private
 exports.createProblem = asyncHandler(async (req, res, next) => {
-  // login with teacher role
-  // create with quiz id
-  let problem = new Problem(req.body);
-  problem = await problem.save();
+  const quiz = await Quiz.findById(req.params.quizId);
+  if (quiz.teacher.toString() !== req.user.id && req.user.role !== 'admin')
+    return next(createError(403));
+
+  req.body.quiz = req.params.quizId;
+  req.body.teacher = req.user.id;
+
+  const problem = await Problem.create(req.body);
   res.status(201).json({ success: true, data: problem });
 });
 
 // @desc    Get all problems
 // @route   GET /api/v1/problems
+// @route   GET /api/v1/quizzes/:quizId/problems
 // @access  Private
 exports.getProblems = asyncHandler(async (req, res, next) => {
-  // find by quiz id
-  // validation: quiz.teacher or quizBroker.student
-  const problems = await Problem.find();
+  const quizId = req.params.quizId;
+  const queryParams = {};
+
+  if (req.user.role !== 'admin') {
+    queryParams.teacher = req.user.id;
+  }
+  if (quizId) {
+    const quiz = await Quiz.findById(quizId);
+    queryParams.quiz = quiz;
+  }
+
+  const problems = await Problem.find(queryParams);
   res.status(200).json({ success: true, data: problems });
 });
 
@@ -28,7 +43,6 @@ exports.getProblems = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.getProblem = asyncHandler(async (req, res, next) => {
   const problem = await Problem.findById(req.params.id);
-  // validation: quiz.teacher or quizBroker.student
   res.status(200).json({ success: true, data: problem });
 });
 
@@ -36,8 +50,8 @@ exports.getProblem = asyncHandler(async (req, res, next) => {
 // @route   PATCH /api/v1/problems/:id
 // @access  Private
 exports.updateProblem = asyncHandler(async (req, res, next) => {
-  const problem = await Problem.findById(req.params.id);
-  // validation: quiz.teacher
+  const problem = await getProblemIfAuthorized(req, next);
+  if (!problem) return;
   const result = await Problem.findByIdAndUpdate(req.params.id, req.body, {
     runValidators: true,
   });
@@ -48,11 +62,16 @@ exports.updateProblem = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/v1/problems/:id
 // @access  Private
 exports.deleteProblem = asyncHandler(async (req, res, next) => {
-  const problem = await Problem.findById(req.params.id);
-  if (!problem) return next(createError(404));
-  // validation: quiz.teacher
-  const result = await problem.remove();
-  if (!result) return next(createError(400));
-
+  const problem = await getProblemIfAuthorized(req, next);
+  if (!problem) return;
+  await problem.remove();
   res.status(204).json({ success: true });
 });
+
+// Get a problem when it is authorized
+const getProblemIfAuthorized = async function (req, next) {
+  const problem = await Problem.findById(req.params.id);
+  if (problem.teacher.toString() !== req.user.id && req.user.role !== 'admin')
+    return next(createError(403));
+  return problem;
+};

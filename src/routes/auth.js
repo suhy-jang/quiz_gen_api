@@ -7,18 +7,24 @@ const {
   getMe,
   updateDetails,
   updateRole,
+  updateScore,
   updatePassword,
   unregister,
 } = require('../controllers/auth');
-const { auth } = require('../middlewares/auth');
+const { authenticate, authorize } = require('../middlewares/auth');
+const quizBrockerRouter = require('./quizBrockers');
+
+// Include other resource routers
+router.use('/quizzes', quizBrockerRouter);
 
 router.post('/register', register);
 router.post('/login', login);
-router.post('/logout', auth, logout);
-router.get('/me', auth, getMe);
-router.patch('/update-details', auth, updateDetails);
-router.patch('/update-role', auth, updateRole);
-router.patch('/update-password', auth, updatePassword);
-router.delete('/unregister', auth, unregister);
+router.post('/logout', authenticate, logout);
+router.get('/me', authenticate, getMe);
+router.patch('/update-details', authenticate, updateDetails);
+router.patch('/update-role', authenticate, updateRole);
+router.patch('/update-score', authenticate, authorize('student'), updateScore);
+router.patch('/update-password', authenticate, updatePassword);
+router.delete('/unregister', authenticate, unregister);
 
 module.exports = router;

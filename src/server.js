@@ -8,9 +8,14 @@ const classroomBrockers = require('./routes/classroomBrockers');
 const users = require('./routes/users');
 const auth = require('./routes/auth');
 const errorHandler = require('./middlewares/error');
+const cookieParser = require('cookie-parser');
 const app = express();
 
+// Body parser
 app.use(express.json());
+
+// Cookie parser
+app.use(cookieParser());
 
 app.use('/api/v1/quizzes', quizzes);
 app.use('/api/v1/problems', problems);

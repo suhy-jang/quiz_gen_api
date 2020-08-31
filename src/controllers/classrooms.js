@@ -6,10 +6,7 @@ const asyncHandler = require('../middlewares/async');
 // @route   POST /api/v1/classrooms
 // @access  Private
 exports.createClassroom = asyncHandler(async (req, res, next) => {
-  // login with teacher role
-  // create with teacher id
-  let classroom = new Classroom(req.body);
-  classroom = await classroom.save();
+  const classroom = await Classroom.create({ teacher: req.user.id });
   res.status(201).json({ success: true, data: classroom });
 });
 
@@ -17,8 +14,8 @@ exports.createClassroom = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/classrooms
 // @access  Private
 exports.getClassrooms = asyncHandler(async (req, res, next) => {
-  // find by teacher id
-  const classrooms = await Classroom.find();
+  const findParams = req.user.role === 'admin' ? {} : { teacher: req.user.id };
+  const classrooms = await Classroom.find(findParams);
   res.status(200).json({ success: true, data: classrooms });
 });
 
@@ -27,7 +24,8 @@ exports.getClassrooms = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.getClassroom = asyncHandler(async (req, res, next) => {
   const classroom = await Classroom.findById(req.params.id);
-  // validation: classroom.teacher
+  if (req.user.role !== 'admin' && classroom.teacher.toString() !== req.user.id)
+    return next(createError(403));
   res.status(200).json({ success: true, data: classroom });
 });
 
@@ -36,10 +34,8 @@ exports.getClassroom = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.deleteClassroom = asyncHandler(async (req, res, next) => {
   const classroom = await Classroom.findById(req.params.id);
-  if (!classroom) return next(createError(404));
-  // validation: classroom.teacher
+  if (req.user.role !== 'admin' && classroom.teacher.toString() !== req.user.id)
+    return next(createError(403));
   const result = await classroom.remove();
-  if (!result) return next(createError(400));
-
-  res.status(204).json({ success: true });
+  res.status(200).json({ success: true, data: result });
 });

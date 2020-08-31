@@ -1,25 +1,46 @@
 const createError = require('http-errors');
-const QuizBrocker = require('../models/QuizBrocker');
 const asyncHandler = require('../middlewares/async');
+const QuizBrocker = require('../models/QuizBrocker');
+const Quiz = require('../models/Quiz');
 
 // @desc    Create a quizBrocker
-// @route   POST /api/v1/quizBrockers
+// @route   POST /api/v1/quizzes/:quizId/students
 // @access  Private
 exports.createQuizBrocker = asyncHandler(async (req, res, next) => {
-  // login with teacher role
-  // create with quiz id and student
-  let quizBrocker = new QuizBrocker(req.body);
-  quizBrocker = await quizBrocker.save();
+  const quiz = await Quiz.findById(req.params.quizId);
+  if (quiz.teacher.toString() !== req.user.id) {
+    return next(createError(403));
+  }
+  req.body.quiz = req.params.quizId;
+  const quizBrocker = await QuizBrocker.create(req.body);
   res.status(201).json({ success: true, data: quizBrocker });
 });
 
 // @desc    Get quizBrockers
-// @route   GET /api/v1/quizBrockers
+// @route   GET /api/v1/auth/quizzes
 // @access  Private
 exports.getQuizBrockers = asyncHandler(async (req, res, next) => {
-  // find by student id
-  // validation: quizBrocker.student
-  const quizBrockers = await QuizBrocker.find();
+  const queryParams = {};
+  if (req.user.role === 'student') {
+    queryParams.student = req.user.id;
+  }
+
+  query = QuizBrocker.find(queryParams).populate({
+    path: 'quiz',
+    select: 'expire',
+    populate: [
+      {
+        path: 'teacher',
+        select: 'name email mobile_number',
+      },
+      {
+        path: 'problems',
+        select: 'question solution score_weight',
+      },
+    ],
+  });
+
+  const quizBrockers = await query;
   res.status(200).json({ success: true, data: quizBrockers });
 });
 
@@ -27,8 +48,22 @@ exports.getQuizBrockers = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/quizBrockers/:id
 // @access  Private
 exports.getQuizBrocker = asyncHandler(async (req, res, next) => {
-  const quizBrocker = await QuizBrocker.findById(req.params.id);
-  // validation: quiz.teacher or quizBroker.student
+  const quizBrocker = await QuizBrocker.findById(req.params.id)
+    .populate({
+      path: 'student',
+      select: 'name email score mobile_number',
+    })
+    .populate({
+      path: 'quiz',
+      select: 'question solution score_weight',
+      populate: {
+        path: 'teacher',
+        select: 'name email mobile_number',
+      },
+    });
+  if (!quizBrocker) return next(createError(404));
+  if (quizBrocker.student.id !== req.user.id) return next(createError(403));
+
   res.status(200).json({ success: true, data: quizBrocker });
 });
 
@@ -37,10 +72,12 @@ exports.getQuizBrocker = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.updateQuizBrocker = asyncHandler(async (req, res, next) => {
   const quizBrocker = await QuizBrocker.findById(req.params.id);
-  // validation: quizBrocker.student
-  const result = await QuizBrocker.findByIdAndUpdate(req.params.id, req.body, {
-    runValidators: true,
-  });
+  if (quizBrocker.student.toString() !== req.user.id)
+    return next(createError(403));
+  if (quizBrocker.submission)
+    return next(createError(400, 'Already submitted'));
+  quizBrocker.submission = true;
+  const result = await quizBrocker.save();
   res.status(200).json({ success: true, data: result });
 });
 
@@ -48,11 +85,11 @@ exports.updateQuizBrocker = asyncHandler(async (req, res, next) => {
 // @route   DELETE /api/v1/quizBrockers/:id
 // @access  Private
 exports.deleteQuizBrocker = asyncHandler(async (req, res, next) => {
-  const quizBrocker = await QuizBrocker.findById(req.params.id);
-  // validation: quizBrocker.quiz.teacher
-  if (!quizBrocker) return next(createError(404));
+  const quizBrocker = await QuizBrocker.findById(req.params.id).populate(
+    'quiz'
+  );
+  if (quizBrocker.quiz.teacher.toString() !== req.user.id)
+    return next(createError(403));
   const result = await quizBrocker.remove();
-  if (!result) return next(createError(400));
-
-  res.status(204).json({ success: true });
+  res.status(200).json({ success: true, data: result });
 });

@@ -77,6 +77,18 @@ exports.updateRole = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: updatedUser });
 });
 
+// @desc    Update user score
+// @route   PATCH /api/v1/auth/update-score
+// @access  Private
+exports.updateScore = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+  if (user.id !== req.user.id) return next(createError(403));
+
+  user.score = req.body.score;
+  const updatedUser = await user.save();
+  res.status(200).json({ success: true, data: updatedUser });
+});
+
 // @desc    Update password
 // @route   PATCH /api/v1/auth/update-password
 // @access  Private
