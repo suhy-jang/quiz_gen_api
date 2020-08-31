@@ -9,6 +9,12 @@ const users = require('./routes/users');
 const auth = require('./routes/auth');
 const errorHandler = require('./middlewares/error');
 const cookieParser = require('cookie-parser');
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
+const xss = require('xss-clean');
+const rateLimit = require('express-rate-limit');
+const hpp = require('hpp');
+const cors = require('cors');
 const app = express();
 
 // Body parser
@@ -16,6 +22,29 @@ app.use(express.json());
 
 // Cookie parser
 app.use(cookieParser());
+
+// Sanitize data
+app.use(mongoSanitize());
+
+// Set cecurity headers
+app.use(helmet());
+
+// Prevent XSS attacks
+app.use(xss());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 mins
+  max: 100,
+});
+
+app.use(limiter);
+
+// Prevent hpp param pollution
+app.use(hpp());
+
+// Enable CORS
+app.use(cors());
 
 app.use('/api/v1/quizzes', quizzes);
 app.use('/api/v1/problems', problems);
